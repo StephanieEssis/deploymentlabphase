@@ -1,0 +1,30 @@
+Styles pour les cartes de chambres
+.room-card {
+  transition: all 0.3s ease;
+}
+
+.room-image {
+  height: 12rem;
+}
+
+.room-price {
+  color: #2563eb;
+}
+
+/* Styles pour la liste des chambres */
+.room-list {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .room-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .room-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
