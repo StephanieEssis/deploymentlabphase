@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAppContext } from '../hooks/useAppContext';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import Home from '../pages/Home/Home';
@@ -11,10 +10,17 @@ import AdminUsers from '../pages/Admin/Users';
 import Booking from '../pages/Booking/Booking';
 import RoomBooking from '../pages/Booking/RoomBooking';
 
-const AppRoutes = () => {
-  const { user } = useAppContext();
-  const isAdmin = user?.role === 'admin';
+const PrivateRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  return user ? children : <Navigate to="/" />;
+};
 
+const AdminRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  return user?.role === 'admin' ? children : <Navigate to="/" />;
+};
+
+const AppRoutes = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -27,19 +33,35 @@ const AppRoutes = () => {
           {/* Routes Admin */}
           <Route 
             path="/admin" 
-            element={isAdmin ? <AdminDashboard /> : <Navigate to="/" />} 
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } 
           />
           <Route 
             path="/admin/rooms" 
-            element={isAdmin ? <AdminRooms /> : <Navigate to="/" />} 
+            element={
+              <AdminRoute>
+                <AdminRooms />
+              </AdminRoute>
+            } 
           />
           <Route 
             path="/admin/bookings" 
-            element={isAdmin ? <AdminBookings /> : <Navigate to="/" />} 
+            element={
+              <AdminRoute>
+                <AdminBookings />
+              </AdminRoute>
+            } 
           />
           <Route 
             path="/admin/users" 
-            element={isAdmin ? <AdminUsers /> : <Navigate to="/" />} 
+            element={
+              <AdminRoute>
+                <AdminUsers />
+              </AdminRoute>
+            } 
           />
         </Routes>
       </main>

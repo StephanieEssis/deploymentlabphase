@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { authService } from '../../services/authService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faEnvelope, faPhone, faLock, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const RegisterModal = ({ onClose, showLogin }) => {
   const [registerForm, setRegisterForm] = useState({
@@ -10,34 +11,51 @@ const RegisterModal = ({ onClose, showLogin }) => {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setRegisterForm(prev => ({ ...prev, [name]: value }));
-    setError(''); // Effacer l'erreur lors de la modification des champs
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     if (registerForm.password !== registerForm.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
+      setIsLoading(false);
       return;
     }
 
     try {
-      await authService.register({
-        fullName: registerForm.fullName,
-        email: registerForm.email,
-        phone: registerForm.phone,
-        password: registerForm.password
+      const response = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: registerForm.fullName,
+          email: registerForm.email,
+          phone: registerForm.phone,
+          password: registerForm.password
+        }),
       });
-      
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de l\'inscription');
+      }
+
       onClose();
       showLogin();
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'inscription. Veuillez réessayer.');
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,13 +64,16 @@ const RegisterModal = ({ onClose, showLogin }) => {
       <div className="bg-white rounded-lg p-8 max-w-md w-full">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">Inscription</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <i className="fas fa-times"></i>
+          <button 
+            onClick={onClose} 
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
             {error}
           </div>
         )}
@@ -64,7 +85,7 @@ const RegisterModal = ({ onClose, showLogin }) => {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fas fa-user text-gray-400"></i>
+                <FontAwesomeIcon icon={faUser} className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 id="fullName"
@@ -78,13 +99,14 @@ const RegisterModal = ({ onClose, showLogin }) => {
               />
             </div>
           </div>
+
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
               Email
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fas fa-envelope text-gray-400"></i>
+                <FontAwesomeIcon icon={faEnvelope} className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 id="email"
@@ -98,13 +120,14 @@ const RegisterModal = ({ onClose, showLogin }) => {
               />
             </div>
           </div>
+
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phone">
               Téléphone
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fas fa-phone text-gray-400"></i>
+                <FontAwesomeIcon icon={faPhone} className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 id="phone"
@@ -118,13 +141,14 @@ const RegisterModal = ({ onClose, showLogin }) => {
               />
             </div>
           </div>
+
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
               Mot de passe
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fas fa-lock text-gray-400"></i>
+                <FontAwesomeIcon icon={faLock} className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 id="password"
@@ -138,13 +162,14 @@ const RegisterModal = ({ onClose, showLogin }) => {
               />
             </div>
           </div>
+
           <div className="mb-6">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmPassword">
               Confirmer le mot de passe
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fas fa-lock text-gray-400"></i>
+                <FontAwesomeIcon icon={faLock} className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 id="confirmPassword"
@@ -158,13 +183,28 @@ const RegisterModal = ({ onClose, showLogin }) => {
               />
             </div>
           </div>
+
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+            disabled={isLoading}
+            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ${
+              isLoading ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
           >
-            S'inscrire
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Inscription en cours...
+              </span>
+            ) : (
+              'S\'inscrire'
+            )}
           </button>
         </form>
+
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             Vous avez déjà un compte ?{' '}

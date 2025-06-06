@@ -9,6 +9,8 @@ router.post('/register', userController.register);
 router.post('/login', userController.login);
 
 // Protected routes
-router.get('/profile', verifyUserToken, userController.getProfile);
+router.get('/me', verifyUserToken, userController.getProfile);
+router.put('/profile', verifyUserToken, userController.updateProfile);
+router.put('/password', verifyUserToken, userController.changePassword);
 
 module.exports = router;

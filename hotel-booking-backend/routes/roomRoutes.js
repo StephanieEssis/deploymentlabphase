@@ -1,16 +1,18 @@
 const express = require('express');
 const roomController = require('../controllers/roomController');
-const verifyAdminToken = require('../middlewares/verifyAdminToken');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
 // Public routes
-router.get('/', roomController.getAllRooms);
-router.get('/:id', roomController.getRoomById);
+router.get('/rooms', roomController.getAllRooms);
+router.get('/rooms/:id', roomController.getRoomById);
+router.get('/rooms/category/:categoryId', roomController.getRoomsByCategory);
+router.get('/rooms/:id/availability', roomController.checkAvailability);
 
-// Admin protected routes
-router.post('/', verifyAdminToken, roomController.createRoom);
-router.put('/:id', verifyAdminToken, roomController.updateRoom);
-router.delete('/:id', verifyAdminToken, roomController.deleteRoom);
+// Protected routes (admin only)
+router.post('/rooms', auth, roomController.createRoom);
+router.put('/rooms/:id', auth, roomController.updateRoom);
+router.delete('/rooms/:id', auth, roomController.deleteRoom);
 
 module.exports = router;

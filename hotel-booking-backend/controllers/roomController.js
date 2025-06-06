@@ -2,110 +2,289 @@ const Room = require('../models/Room');
 const Category = require('../models/Category');
 
 const roomController = {
-  // Create room
-  createRoom: async (req, res) => {
-    try {
-      const { name, description, categoryId, capacity, image } = req.body;
-
-      // Check if category exists
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(400).json({ message: 'Category not found' });
-      }
-
-      const room = new Room({ name, description, categoryId, capacity, image });
-      await room.save();
-
-      const populatedRoom = await Room.findById(room._id).populate('categoryId');
-
-      res.status(201).json({
-        message: 'Room created successfully',
-        room: populatedRoom
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  },
-
   // Get all rooms
   getAllRooms: async (req, res) => {
     try {
-      const { category, available } = req.query;
+      const { category, minPrice, maxPrice, capacity } = req.query;
       let filter = {};
 
+      // Filtres
       if (category) {
-        filter.categoryId = category;
+        filter.category = category;
       }
-      if (available !== undefined) {
-        filter.isAvailable = available === 'true';
+      if (minPrice || maxPrice) {
+        filter.price = {};
+        if (minPrice) filter.price.$gte = Number(minPrice);
+        if (maxPrice) filter.price.$lte = Number(maxPrice);
+      }
+      if (capacity) {
+        filter.capacity = { $gte: Number(capacity) };
       }
 
       const rooms = await Room.find(filter)
-        .populate('categoryId')
+        .populate('category')
         .sort({ createdAt: -1 });
 
-      res.json(rooms);
+      res.json({
+        success: true,
+        data: {
+          rooms,
+          count: rooms.length
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Get all rooms error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch rooms',
+        error: error.message
+      });
     }
   },
 
   // Get room by ID
   getRoomById: async (req, res) => {
     try {
-      const room = await Room.findById(req.params.id).populate('categoryId');
+      const room = await Room.findById(req.params.id).populate('category');
+      
       if (!room) {
-        return res.status(404).json({ message: 'Room not found' });
-      }
-      res.json(room);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  },
-
-  // Update room
-  updateRoom: async (req, res) => {
-    try {
-      const { name, description, categoryId, capacity, image, isAvailable } = req.body;
-
-      // Check if category exists
-      if (categoryId) {
-        const category = await Category.findById(categoryId);
-        if (!category) {
-          return res.status(400).json({ message: 'Category not found' });
-        }
-      }
-
-      const room = await Room.findByIdAndUpdate(
-        req.params.id,
-        { name, description, categoryId, capacity, image, isAvailable },
-        { new: true, runValidators: true }
-      ).populate('categoryId');
-
-      if (!room) {
-        return res.status(404).json({ message: 'Room not found' });
+        return res.status(404).json({
+          success: false,
+          message: 'Room not found'
+        });
       }
 
       res.json({
-        message: 'Room updated successfully',
-        room
+        success: true,
+        data: { room }
       });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Get room by ID error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch room',
+        error: error.message
+      });
     }
   },
 
-  // Delete room
-  deleteRoom: async (req, res) => {
+  // Get rooms by category
+  getRoomsByCategory: async (req, res) => {
     try {
-      const room = await Room.findByIdAndDelete(req.params.id);
-      if (!room) {
-        return res.status(404).json({ message: 'Room not found' });
+      const category = await Category.findById(req.params.categoryId);
+      if (!category) {
+        return res.status(404).json({
+          success: false,
+          message: 'Category not found'
+        });
       }
 
-      res.json({ message: 'Room deleted successfully' });
+      const rooms = await Room.find({ category: req.params.categoryId })
+        .populate('category')
+        .sort({ price: 1 });
+
+      res.json({
+        success: true,
+        data: {
+          category,
+          rooms,
+          count: rooms.length
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Get rooms by category error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch rooms by category',
+        error: error.message
+      });
+    }
+  },
+
+  // Check room availability
+  checkAvailability: async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const room = await Room.findById(req.params.id);
+
+      if (!room) {
+        return res.status(404).json({
+          success: false,
+          message: 'Room not found'
+        });
+      }
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide both start and end dates'
+        });
+      }
+
+      // TODO: Implement actual availability check logic
+      // For now, we'll just return the room's current availability status
+      res.json({
+        success: true,
+        data: {
+          isAvailable: room.isAvailable,
+          room
+        }
+      });
+    } catch (error) {
+      console.error('Check availability error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to check room availability',
+        error: error.message
+      });
+    }
+  },
+
+  // Create new room (admin only)
+  createRoom: async (req, res) => {
+    try {
+      const {
+        name,
+        description,
+        price,
+        capacity,
+        category,
+        images,
+        amenities
+      } = req.body;
+
+      // Validation des données
+      if (!name || !description || !price || !capacity || !category) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide all required fields'
+        });
+      }
+
+      // Vérifier si la catégorie existe
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Category not found'
+        });
+      }
+
+      const room = new Room({
+        name,
+        description,
+        price,
+        capacity,
+        category,
+        images: images || [],
+        amenities: amenities || []
+      });
+
+      await room.save();
+
+      const populatedRoom = await Room.findById(room._id).populate('category');
+
+      res.status(201).json({
+        success: true,
+        message: 'Room created successfully',
+        data: { room: populatedRoom }
+      });
+    } catch (error) {
+      console.error('Create room error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create room',
+        error: error.message
+      });
+    }
+  },
+
+  // Update room (admin only)
+  updateRoom: async (req, res) => {
+    try {
+      const {
+        name,
+        description,
+        price,
+        capacity,
+        category,
+        images,
+        amenities,
+        isAvailable
+      } = req.body;
+
+      const room = await Room.findById(req.params.id);
+      if (!room) {
+        return res.status(404).json({
+          success: false,
+          message: 'Room not found'
+        });
+      }
+
+      // Vérifier si la catégorie existe si elle est fournie
+      if (category) {
+        const categoryExists = await Category.findById(category);
+        if (!categoryExists) {
+          return res.status(400).json({
+            success: false,
+            message: 'Category not found'
+          });
+        }
+        room.category = category;
+      }
+
+      // Mettre à jour les champs
+      if (name) room.name = name;
+      if (description) room.description = description;
+      if (price) room.price = price;
+      if (capacity) room.capacity = capacity;
+      if (images) room.images = images;
+      if (amenities) room.amenities = amenities;
+      if (typeof isAvailable === 'boolean') room.isAvailable = isAvailable;
+
+      await room.save();
+
+      const updatedRoom = await Room.findById(room._id).populate('category');
+
+      res.json({
+        success: true,
+        message: 'Room updated successfully',
+        data: { room: updatedRoom }
+      });
+    } catch (error) {
+      console.error('Update room error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update room',
+        error: error.message
+      });
+    }
+  },
+
+  // Delete room (admin only)
+  deleteRoom: async (req, res) => {
+    try {
+      const room = await Room.findById(req.params.id);
+      if (!room) {
+        return res.status(404).json({
+          success: false,
+          message: 'Room not found'
+        });
+      }
+
+      await room.remove();
+
+      res.json({
+        success: true,
+        message: 'Room deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete room error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete room',
+        error: error.message
+      });
     }
   }
 };

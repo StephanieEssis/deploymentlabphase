@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import LoginModal from '../Auth/LoginModal';
 import RegisterModal from '../Auth/RegisterModal';
-import { useAppContext } from '../../hooks/useAppContext';
 
 const Header = () => {
-  const { user, logout } = useAppContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-
+  const user = JSON.parse(localStorage.getItem('user'));
   const isAdmin = user?.role === 'admin';
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  };
 
   return (
     <>
@@ -39,7 +42,7 @@ const Header = () => {
             </div>
             <div className="flex items-center">
               {user ? (
-                <button onClick={logout} className="text-blue-600 hover:text-blue-800 px-3 py-2 rounded-md text-sm font-medium">
+                <button onClick={handleLogout} className="text-blue-600 hover:text-blue-800 px-3 py-2 rounded-md text-sm font-medium">
                   <i className="fas fa-sign-out-alt mr-1"></i> Déconnexion
                 </button>
               ) : (

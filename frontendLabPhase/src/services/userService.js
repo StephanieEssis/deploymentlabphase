@@ -6,19 +6,22 @@ export const userService = {
     try {
       const requestData = { email, password };
       console.log('Login request data:', requestData);
-      console.log('Full API URL:', `${api.defaults.baseURL}/auth/login`);
       
-      const response = await api.post('/auth/login', requestData);
+      const response = await api.post('/users/login', requestData);
       console.log('Login response:', response.data);
+      
+      // Stocker le token et les données utilisateur
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error during login:', {
         message: error.message,
         status: error.response?.status,
-        data: error.response?.data,
-        url: error.config?.url,
-        headers: error.config?.headers,
-        method: error.config?.method
+        data: error.response?.data
       });
       throw error;
     }
@@ -27,7 +30,7 @@ export const userService = {
   // Inscription utilisateur
   register: async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await api.post('/users/register', userData);
       return response.data;
     } catch (error) {
       console.error('Error during registration:', error);
@@ -38,7 +41,7 @@ export const userService = {
   // Récupérer l'utilisateur courant
   getCurrentUser: async () => {
     try {
-      const response = await api.get('/auth/me');
+      const response = await api.get('/users/me');
       return response.data;
     } catch (error) {
       console.error('Error fetching current user:', error);
@@ -49,7 +52,7 @@ export const userService = {
   // Mettre à jour le profil utilisateur
   updateProfile: async (userData) => {
     try {
-      const response = await api.put('/auth/profile', userData);
+      const response = await api.put('/users/profile', userData);
       return response.data;
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -60,7 +63,7 @@ export const userService = {
   // Changer le mot de passe
   changePassword: async (currentPassword, newPassword) => {
     try {
-      const response = await api.put('/auth/password', {
+      const response = await api.put('/users/password', {
         currentPassword,
         newPassword
       });
@@ -69,5 +72,11 @@ export const userService = {
       console.error('Error changing password:', error);
       throw error;
     }
+  },
+
+  // Déconnexion
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   }
 }; 

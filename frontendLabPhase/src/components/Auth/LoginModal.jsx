@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { useAppContext } from '../../hooks/useAppContext';
 import { useNavigate } from 'react-router-dom';
 
 const LoginModal = ({ onClose, showRegister }) => {
-  const { login } = useAppContext();
   const navigate = useNavigate();
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -22,23 +20,25 @@ const LoginModal = ({ onClose, showRegister }) => {
     setIsLoading(true);
 
     try {
-      console.log('Tentative de connexion...');
-      const result = await login(loginForm.email, loginForm.password);
-      console.log('Résultat de la connexion:', result);
-      
-      if (result.success) {
-        onClose();
-        navigate('/booking');
-      } else {
-        setError(result.message || 'Une erreur est survenue lors de la connexion');
+      const response = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginForm),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Une erreur est survenue lors de la connexion');
       }
+
+      localStorage.setItem('user', JSON.stringify(data));
+      onClose();
+      navigate('/booking');
     } catch (err) {
-      console.error('Erreur de connexion:', err);
-      setError(
-        err.response?.data?.message || 
-        err.message || 
-        'Une erreur est survenue lors de la connexion. Veuillez réessayer.'
-      );
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }

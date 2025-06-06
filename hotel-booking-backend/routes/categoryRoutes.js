@@ -1,16 +1,15 @@
 const express = require('express');
-const categoryController = require('../controllers/categoryController');
-const verifyAdminToken = require('../middlewares/verifyAdminToken');
-
 const router = express.Router();
+const categoryController = require('../controllers/categoryController');
+const auth = require('../middleware/auth');
 
-// Public routes
-router.get('/', categoryController.getAllCategories);
-router.get('/:id', categoryController.getCategoryById);
+// Routes publiques
+router.get('/categories', categoryController.getAllCategories);
+router.get('/categories/:id', categoryController.getCategoryById);
 
-// Admin protected routes
-router.post('/', verifyAdminToken, categoryController.createCategory);
-router.put('/:id', verifyAdminToken, categoryController.updateCategory);
-router.delete('/:id', verifyAdminToken, categoryController.deleteCategory);
+// Routes protégées (admin only)
+router.post('/categories', auth, categoryController.createCategory);
+router.put('/categories/:id', auth, categoryController.updateCategory);
+router.delete('/categories/:id', auth, categoryController.deleteCategory);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const userController = {
   // Register user
@@ -89,6 +90,53 @@ const userController = {
           phone: req.user.phone
         }
       });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  // Update user profile
+  updateProfile: async (req, res) => {
+    try {
+      const { fullName, phone } = req.body;
+      const user = await User.findById(req.user._id);
+
+      if (fullName) user.fullName = fullName;
+      if (phone) user.phone = phone;
+
+      await user.save();
+
+      res.json({
+        message: 'Profile updated successfully',
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  // Change password
+  changePassword: async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const user = await User.findById(req.user._id);
+
+      // Verify current password
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+
+      // Update password
+      user.password = newPassword;
+      await user.save();
+
+      res.json({ message: 'Password changed successfully' });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
