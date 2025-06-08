@@ -1,44 +1,75 @@
 import api from './api';
 
 export const roomService = {
-  // Récupérer toutes les chambres
+  // Obtenir toutes les chambres
   getAllRooms: async () => {
     try {
-      const response = await api.get('/hotel/rooms');
+      const response = await api.get('/rooms');
       return response.data;
     } catch (error) {
-      console.error('Error fetching rooms:', error);
-      throw error;
+      throw error.response?.data || error.message;
     }
   },
 
-  // Récupérer une chambre par son ID
+  // Obtenir une chambre par ID
   getRoomById: async (id) => {
     try {
-      const response = await api.get(`/hotel/rooms/${id}`);
+      const response = await api.get(`/rooms/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching room ${id}:`, error);
-      throw error;
+      throw error.response?.data || error.message;
     }
   },
 
-  // Récupérer les chambres par catégorie
+  // Obtenir les chambres par catégorie
   getRoomsByCategory: async (categoryId) => {
     try {
-      const response = await api.get(`/hotel/rooms/category/${categoryId}`);
+      const response = await api.get(`/rooms/category/${categoryId}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching rooms for category ${categoryId}:`, error);
-      throw error;
+      throw error.response?.data || error.message;
     }
   },
 
   // Vérifier la disponibilité d'une chambre
-  checkAvailability: async (roomId, startDate, endDate) => {
-    const response = await api.get(`/hotel/rooms/${roomId}/availability`, {
-      params: { startDate, endDate }
-    });
-    return response.data;
+  checkAvailability: async (id, startDate, endDate) => {
+    try {
+      const response = await api.get(`/rooms/${id}/availability`, {
+        params: { startDate, endDate }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Créer une nouvelle chambre (admin)
+  createRoom: async (roomData) => {
+    try {
+      const response = await api.post('/rooms', roomData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Mettre à jour une chambre (admin)
+  updateRoom: async (id, roomData) => {
+    try {
+      const response = await api.put(`/rooms/${id}`, roomData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Supprimer une chambre (admin)
+  deleteRoom: async (id) => {
+    try {
+      const response = await api.delete(`/rooms/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
   }
 }; 
