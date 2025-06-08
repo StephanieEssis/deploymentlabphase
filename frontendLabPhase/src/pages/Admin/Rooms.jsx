@@ -1,91 +1,231 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AdminRooms = () => {
-  const [rooms, setRooms] = useState([
-    { id: 1, name: 'Chambre Standard', type: 'standard', price: 75000, status: 'disponible' },
-    { id: 2, name: 'Chambre Deluxe', type: 'deluxe', price: 80000, status: 'occupée' },
-    { id: 3, name: 'Suite Junior', type: 'suite', price: 85000, status: 'maintenance' },
-    { id: 4, name: 'Suite Familiale', type: 'family', price: 95000, status: 'disponible' },
-  ]);
-
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newRoom, setNewRoom] = useState({
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editingRoom, setEditingRoom] = useState(null);
+  const [formData, setFormData] = useState({
     name: '',
-    type: 'standard',
+    description: '',
     price: '',
-    status: 'disponible'
+    capacity: '',
+    category: '',
+    amenities: []
   });
 
-  const handleAddRoom = (e) => {
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem('user'))?.token;
+      const response = await axios.get('http://localhost:5000/api/rooms', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRooms(response.data);
+      setLoading(false);
+    } catch (error) {
+      setError('Error fetching rooms');
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const roomToAdd = {
-      ...newRoom,
-      id: rooms.length + 1,
-      price: parseInt(newRoom.price)
-    };
-    setRooms([...rooms, roomToAdd]);
-    setShowAddModal(false);
-    setNewRoom({
-      name: '',
-      type: 'standard',
-      price: '',
-      status: 'disponible'
+    try {
+      const token = JSON.parse(localStorage.getItem('user'))?.token;
+      if (editingRoom) {
+        await axios.put(`http://localhost:5000/api/rooms/${editingRoom._id}`, formData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        await axios.post('http://localhost:5000/api/rooms', formData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+      fetchRooms();
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        capacity: '',
+        category: '',
+        amenities: []
+      });
+      setEditingRoom(null);
+    } catch (error) {
+      setError('Error saving room');
+    }
+  };
+
+  const handleEdit = (room) => {
+    setEditingRoom(room);
+    setFormData({
+      name: room.name,
+      description: room.description,
+      price: room.price,
+      capacity: room.capacity,
+      category: room.category,
+      amenities: room.amenities
     });
   };
 
-  const handleDelete = (id) => {
-    setRooms(rooms.filter(room => room.id !== id));
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this room?')) {
+      try {
+        const token = JSON.parse(localStorage.getItem('user'))?.token;
+        await axios.delete(`http://localhost:5000/api/rooms/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        fetchRooms();
+      } catch (error) {
+        setError('Error deleting room');
+      }
+    }
   };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Gestion des Chambres</h1>
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-        >
-          <i className="fas fa-plus mr-2"></i> Ajouter une chambre
-        </button>
+      <h1 className="text-3xl font-bold mb-8">Gestion des chambres</h1>
+
+      {/* Add/Edit Room Form */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">
+          {editingRoom ? 'Modifier la chambre' : 'Ajouter une nouvelle chambre'}
+        </h2>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Nom</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Prix</label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Capacité</label>
+              <input
+                type="number"
+                name="capacity"
+                value={formData.capacity}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Catégorie</label>
+              <input
+                type="text"
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows="3"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              {editingRoom ? 'Mettre à jour' : 'Ajouter'}
+            </button>
+            {editingRoom && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingRoom(null);
+                  setFormData({
+                    name: '',
+                    description: '',
+                    price: '',
+                    capacity: '',
+                    category: '',
+                    amenities: []
+                  });
+                }}
+                className="ml-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+              >
+                Annuler
+              </button>
+            )}
+          </div>
+        </form>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Rooms List */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacité</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {rooms.map((room) => (
-              <tr key={room.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{room.id}</td>
+              <tr key={room._id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{room.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{room.type}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{room.price} €</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${room.status === 'disponible' ? 'bg-green-100 text-green-800' : 
-                      room.status === 'occupée' ? 'bg-red-100 text-red-800' : 
-                      'bg-yellow-100 text-yellow-800'}`}>
-                    {room.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900 mr-4">
-                    <i className="fas fa-edit"></i>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{room.category}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{room.price}€</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{room.capacity} personnes</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <button
+                    onClick={() => handleEdit(room)}
+                    className="text-blue-600 hover:text-blue-900 mr-4"
+                  >
+                    Modifier
                   </button>
-                  <button 
-                    onClick={() => handleDelete(room.id)}
+                  <button
+                    onClick={() => handleDelete(room._id)}
                     className="text-red-600 hover:text-red-900"
                   >
-                    <i className="fas fa-trash"></i>
+                    Supprimer
                   </button>
                 </td>
               </tr>
@@ -93,87 +233,8 @@ const AdminRooms = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Modal d'ajout */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Ajouter une chambre</h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-            <form onSubmit={handleAddRoom}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">Nom</label>
-                <input
-                  type="text"
-                  value={newRoom.name}
-                  onChange={(e) => setNewRoom({...newRoom, name: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">Type</label>
-                <select
-                  value={newRoom.type}
-                  onChange={(e) => setNewRoom({...newRoom, type: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="standard">Standard</option>
-                  <option value="deluxe">Deluxe</option>
-                  <option value="suite">Suite</option>
-                  <option value="family">Familiale</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">Prix (€)</label>
-                <input
-                  type="number"
-                  value={newRoom.price}
-                  onChange={(e) => setNewRoom({...newRoom, price: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  required
-                />
-              </div>
-              <div className="mb-6">
-                <label className="block text-gray-700 text-sm font-bold mb-2">Statut</label>
-                <select
-                  value={newRoom.status}
-                  onChange={(e) => setNewRoom({...newRoom, status: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="disponible">Disponible</option>
-                  <option value="occupée">Occupée</option>
-                  <option value="maintenance">Maintenance</option>
-                </select>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="mr-4 px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-                >
-                  Ajouter
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default AdminRooms;
+export default AdminRooms; 

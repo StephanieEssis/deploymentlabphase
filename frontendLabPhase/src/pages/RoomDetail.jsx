@@ -17,7 +17,7 @@ const RoomDetail = () => {
         setRoom(data);
         setLoading(false);
       } catch (err) {
-        setError('Erreur lors du chargement de la chambre');
+        setError(`Erreur lors du chargement de la chambre: ${err.message}`);
         setLoading(false);
       }
     };

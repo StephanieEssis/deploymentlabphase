@@ -7,7 +7,6 @@ const Header = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
-  const isAdmin = user?.role === 'admin';
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -33,11 +32,6 @@ const Header = () => {
                 <Link to="/booking" className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
                   Chambres
                 </Link>
-                {isAdmin && (
-                  <Link to="/admin" className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Admin
-                  </Link>
-                )}
               </nav>
             </div>
             <div className="flex items-center">

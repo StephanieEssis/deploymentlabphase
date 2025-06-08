@@ -12,14 +12,16 @@ const RoomList = ({ categoryId = null }) => {
     const fetchRooms = async () => {
       try {
         setLoading(true);
+        console.log('Fetching rooms...');
         const data = categoryId
           ? await roomService.getRoomsByCategory(categoryId)
           : await roomService.getAllRooms();
+        console.log('Rooms data:', data);
         setRooms(data);
         setError(null);
       } catch (err) {
-        setError('Erreur lors du chargement des chambres');
         console.error('Error fetching rooms:', err);
+        setError('Erreur lors du chargement des chambres');
       } finally {
         setLoading(false);
       }
