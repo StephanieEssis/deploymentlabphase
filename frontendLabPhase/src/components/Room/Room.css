@@ -1,4 +1,4 @@
-Styles pour les cartes de chambres
+/* Styles pour les cartes de chambres
 .room-card {
   background: white;
   border-radius: 8px;
@@ -144,4 +144,4 @@ Styles pour les cartes de chambres
   .room-list {
     grid-template-columns: repeat(4, 1fr);
   }
-}
+} 
