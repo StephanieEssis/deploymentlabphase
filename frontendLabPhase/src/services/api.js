@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://backendmanage-7nxn.onrender.com/api';
+const API_URL = 'https://backendmanage-7nxn.onrender.com';
 
 console.log('API URL:', API_URL); // Pour déboguer
 

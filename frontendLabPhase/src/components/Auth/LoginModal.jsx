@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../../services/authService';
 
 const LoginModal = ({ onClose, showRegister }) => {
   const navigate = useNavigate();
@@ -20,25 +21,11 @@ const LoginModal = ({ onClose, showRegister }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/users/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginForm),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Une erreur est survenue lors de la connexion');
-      }
-
-      localStorage.setItem('user', JSON.stringify(data));
+      const data = await authService.login(loginForm);
       onClose();
       navigate('/booking');
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Une erreur est survenue lors de la connexion');
     } finally {
       setIsLoading(false);
     }
