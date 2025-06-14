@@ -1,53 +1,75 @@
 import api from './api';
 
 export const authService = {
-  // Connexion
-  login: async (credentials) => {
-    try {
-      console.log('Tentative de connexion avec:', credentials);
-      const response = await api.post('/auth/login', credentials);
-      console.log('Réponse du serveur:', response.data);
-      
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        return response.data;
-      } else {
-        throw new Error('Token non reçu du serveur');
-      }
-    } catch (error) {
-      console.error('Erreur de connexion:', error.response?.data || error.message);
-      throw error;
+  // Configurer le token dans l'instance axios
+  setAuthToken(token) {
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common['Authorization'];
     }
+  },
+
+  // Supprimer le token de l'instance axios
+  removeAuthToken() {
+    delete api.defaults.headers.common['Authorization'];
+  },
+
+  // Connexion
+  async login(credentials) {
+    const response = await api.post('/auth/login', credentials);
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    return response.data;
   },
 
   // Inscription
-  register: async (userData) => {
-    try {
-      console.log('Tentative d\'inscription avec:', userData);
-      const response = await api.post('/auth/register', userData);
-      console.log('Réponse du serveur:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Erreur d\'inscription:', error.response?.data || error.message);
-      throw error;
-    }
+  async register(userData) {
+    const response = await api.post('/auth/register', userData);
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    return response.data;
   },
 
   // Déconnexion
-  logout: () => {
+  logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-  },
-
-  // Vérifier si l'utilisateur est connecté
-  isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    delete api.defaults.headers.common['Authorization'];
   },
 
   // Récupérer l'utilisateur courant
-  getCurrentUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+  async getCurrentUser() {
+    try {
+      const response = await api.get('/auth/me');
+      return response.data;
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+      return null;
+    }
+  },
+
+  // Mettre à jour le profil
+  async updateProfile(userData) {
+    const response = await api.put('/auth/profile', userData);
+    if (response.data) {
+      localStorage.setItem('user', JSON.stringify(response.data));
+    }
+    return response.data;
+  },
+
+  // Changer le mot de passe
+  async changePassword(passwordData) {
+    const response = await api.put('/auth/password', passwordData);
+    return response.data;
+  },
+
+  // Vérifier si l'utilisateur est connecté
+  isAuthenticated() {
+    return !!localStorage.getItem('token');
   }
 };

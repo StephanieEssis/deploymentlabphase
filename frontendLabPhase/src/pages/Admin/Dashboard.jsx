@@ -1,109 +1,182 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faBed, 
+  faCalendarAlt, 
+  faUsers, 
+  faSearch,
+  faPlus,
+  faList,
+  faUserCog
+} from '@fortawesome/free-solid-svg-icons';
+import roomService from '../../services/roomService';
+import bookingService from '../../services/bookingService';
+import { userService } from '../../services/userService';
 
-const AdminDashboard = () => {
+const StatsCard = ({ icon, title, value, color }) => (
+  <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="flex items-center justify-between mb-4">
+      <div className={`text-${color}-600 text-2xl`}>
+        <FontAwesomeIcon icon={icon} />
+      </div>
+      <span className="text-2xl font-bold">{value}</span>
+    </div>
+    <h3 className="text-lg font-semibold">{title}</h3>
+  </div>
+);
+
+const QuickAction = ({ icon, title, description, to }) => (
+  <Link
+    to={to}
+    className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+  >
+    <div className="text-blue-600 text-2xl mb-4">
+      <FontAwesomeIcon icon={icon} />
+    </div>
+    <h3 className="text-xl font-semibold mb-2">{title}</h3>
+    <p className="text-gray-600">{description}</p>
+  </Link>
+);
+
+const Dashboard = () => {
   const [stats, setStats] = useState({
-    totalBookings: 0,
-    totalUsers: 0,
     totalRooms: 0,
-    recentBookings: []
+    availableRooms: 0,
+    monthlyBookings: 0,
+    totalUsers: 0
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
-        const response = await axios.get('http://localhost:5000/api/admin/dashboard', {
-          headers: { Authorization: `Bearer ${token}` }
+        setLoading(true);
+        const [roomsResponse, bookingsResponse, usersResponse] = await Promise.all([
+          roomService.getRooms(),
+          bookingService.getBookings(),
+          userService.getUsers()
+        ]);
+
+        const rooms = roomsResponse.rooms || [];
+        const bookings = bookingsResponse.bookings || [];
+        const users = usersResponse.users || [];
+
+        // Calculer les statistiques
+        const currentMonth = new Date().getMonth();
+        const monthlyBookings = bookings.filter(booking => 
+          new Date(booking.checkIn).getMonth() === currentMonth
+        ).length;
+
+        setStats({
+          totalRooms: rooms.length,
+          availableRooms: rooms.filter(room => room.status === 'available').length,
+          monthlyBookings: monthlyBookings,
+          totalUsers: users.length
         });
-        setStats(response.data);
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+      } catch (err) {
+        setError('Erreur lors du chargement des données');
+        console.error('Erreur:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchStats();
+    fetchData();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500 text-center">
+          <p className="text-xl font-semibold">{error}</p>
+          <p className="mt-2">Veuillez réessayer plus tard</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Tableau de bord administrateur</h1>
-      
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Total des réservations</h3>
-          <p className="text-3xl font-bold text-blue-600">{stats.totalBookings}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Total des utilisateurs</h3>
-          <p className="text-3xl font-bold text-green-600">{stats.totalUsers}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Total des chambres</h3>
-          <p className="text-3xl font-bold text-purple-600">{stats.totalRooms}</p>
+      <h1 className="text-3xl font-bold mb-8">Tableau de Bord</h1>
+
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatsCard
+          icon={faBed}
+          title="Total des Chambres"
+          value={stats.totalRooms}
+          color="blue"
+        />
+        <StatsCard
+          icon={faCalendarAlt}
+          title="Chambres Disponibles"
+          value={stats.availableRooms}
+          color="green"
+        />
+        <StatsCard
+          icon={faSearch}
+          title="Réservations du Mois"
+          value={stats.monthlyBookings}
+          color="purple"
+        />
+        <StatsCard
+          icon={faUsers}
+          title="Utilisateurs Inscrits"
+          value={stats.totalUsers}
+          color="orange"
+        />
+      </div>
+
+      {/* Actions rapides */}
+      <h2 className="text-2xl font-bold mb-6">Actions Rapides</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <QuickAction
+          icon={faPlus}
+          title="Ajouter une Chambre"
+          description="Créer une nouvelle chambre dans le système"
+          to="/admin/rooms/new"
+        />
+        <QuickAction
+          icon={faList}
+          title="Gérer les Réservations"
+          description="Voir et gérer toutes les réservations"
+          to="/admin/bookings"
+        />
+        <QuickAction
+          icon={faUserCog}
+          title="Gérer les Utilisateurs"
+          description="Gérer les comptes utilisateurs"
+          to="/admin/users"
+        />
+      </div>
+
+      {/* Graphique des réservations (à implémenter) */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 className="text-2xl font-bold mb-4">Tendances des Réservations</h2>
+        <div className="h-64 flex items-center justify-center text-gray-500">
+          Graphique des réservations à implémenter
         </div>
       </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Link to="/admin/rooms" className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Gérer les chambres</h3>
-          <p className="text-gray-500">Ajouter, modifier ou supprimer des chambres</p>
-        </Link>
-        <Link to="/admin/bookings" className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Gérer les réservations</h3>
-          <p className="text-gray-500">Voir et gérer toutes les réservations</p>
-        </Link>
-        <Link to="/admin/users" className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Gérer les utilisateurs</h3>
-          <p className="text-gray-500">Voir et gérer les utilisateurs</p>
-        </Link>
-      </div>
-
-      {/* Recent Bookings */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Réservations récentes</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chambre</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {stats.recentBookings.map((booking) => (
-                  <tr key={booking._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking._id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.user.fullName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.room.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {booking.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {/* Dernières réservations (à implémenter) */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-4">Dernières Réservations</h2>
+        <div className="text-gray-500 text-center py-8">
+          Liste des dernières réservations à implémenter
         </div>
       </div>
     </div>
   );
 };
 
-export default AdminDashboard; 
+export default Dashboard; 

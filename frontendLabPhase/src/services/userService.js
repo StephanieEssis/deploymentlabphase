@@ -50,29 +50,16 @@ export const userService = {
   },
 
   // Mettre à jour le profil utilisateur
-  updateProfile: async (userData) => {
-    try {
-      const response = await api.put('/users/profile', userData);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw error;
-    }
-  },
+  updateProfile: (userData) => api.put('/users/profile', userData).then(response => response.data),
 
-  // Changer le mot de passe
-  changePassword: async (currentPassword, newPassword) => {
-    try {
-      const response = await api.put('/users/password', {
-        currentPassword,
-        newPassword
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error changing password:', error);
-      throw error;
-    }
-  },
+  // Mettre à jour le mot de passe
+  updatePassword: (passwordData) => api.put('/users/password', passwordData).then(response => response.data),
+
+  // Obtenir les détails du profil
+  getProfile: () => api.get('/users/profile').then(response => response.data),
+
+  // Supprimer le compte
+  deleteAccount: () => api.delete('/users/profile').then(response => response.data),
 
   // Déconnexion
   logout: () => {

@@ -1,164 +1,223 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import SearchBar from '../../components/Search/SearchBar';
-import RoomList from '../../components/Room/RoomList';
-import StatsCard from '../../components/Stats/StatsCard';
-import BookingChart from '../../components/Stats/BookingChart';
-// import { useAppContext } from '../../hooks/useAppContext';
-import LoginModal from '../../components/Auth/LoginModal';
-import RegisterModal from '../../components/Auth/RegisterModal';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faBed, 
+  faWifi, 
+  faSwimmingPool, 
+  faUtensils, 
+  faParking, 
+  faSpa,
+  faSearch,
+  faCalendarAlt
+} from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import roomService from '../../services/roomService';
+import bookingService from '../../services/bookingService';
 
 const Home = () => {
-  const navigate = useNavigate();
-  // const { user } = useAppContext();
-  const [isLoading, setIsLoading] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  
-  const roomsData = useMemo(() => [
-    {
-      id: 1,
-      name: 'Chambre Standard',
-      description: 'Confort essentiel pour un séjour agréable avec lit queen, salle de bain privée et vue sur la ville.',
-      price: 75000,
-      image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop',
-      amenities: ['Wi-Fi', 'TV', 'Climatisation', 'Sèche-cheveux']
-    },
-    {
-      id: 2,
-      name: 'Chambre Deluxe',
-      description: 'Espace supplémentaire et commodités premium avec lit king et vue panoramique.',
-      price: 80000,
-      image: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&h=600&fit=crop',
-      amenities: ['Wi-Fi', 'TV écran plat', 'Mini-bar', 'Climatisation', 'Salle de bain marbre']
-    },
-    {
-      id: 3,
-      name: 'Suite Junior',
-      description: 'Séjour luxueux avec salon séparé et chambre spacieuse.',
-      price: 85000,
-      image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop',
-      amenities: ['Wi-Fi premium', 'TV 55"', 'Espace bureau', 'Service en chambre']
-    },
-    {
-      id: 4,
-      name: 'Suite Familiale',
-      description: 'Idéal pour les familles avec enfants, comprenant deux chambres séparées.',
-      price: 90000,
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
-      amenities: ['Wi-Fi', '2 TV', 'Espace jeu', 'Lit bébé sur demande']
-    }
-  ], []);
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalRooms: 0,
+    availableRooms: 0,
+    monthlyBookings: 0
+  });
+  const [featuredRooms, setFeaturedRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleBookingClick = () => {
-    setIsLoading(true);
-    try {
-      navigate('/booking');
-    } catch (error) {
-      console.error('Erreur lors de la redirection:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [roomsResponse, bookingsResponse] = await Promise.all([
+          roomService.getRooms(),
+          user ? bookingService.getBookings() : Promise.resolve({ bookings: [] })
+        ]);
+
+        const rooms = roomsResponse.rooms || [];
+        const bookings = bookingsResponse.bookings || [];
+
+        // Calculer les statistiques
+        const currentMonth = new Date().getMonth();
+        const monthlyBookings = bookings.filter(booking => 
+          new Date(booking.checkIn).getMonth() === currentMonth
+        ).length;
+
+        setStats({
+          totalRooms: rooms.length,
+          availableRooms: rooms.filter(room => room.status === 'available').length,
+          monthlyBookings: monthlyBookings
+        });
+
+        // Sélectionner les chambres en vedette (les 3 premières disponibles)
+        setFeaturedRooms(rooms.filter(room => room.status === 'available').slice(0, 3));
+      } catch (err) {
+        setError('Erreur lors du chargement des données');
+        console.error('Erreur:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  const features = [
+    { icon: faBed, title: 'Chambres Confortables', description: 'Des chambres spacieuses et confortables pour un séjour agréable' },
+    { icon: faWifi, title: 'WiFi Gratuit', description: 'Accès Internet haut débit dans tout l\'établissement' },
+    { icon: faSwimmingPool, title: 'Piscine', description: 'Piscine extérieure avec vue panoramique' },
+    { icon: faUtensils, title: 'Restaurant', description: 'Restaurant gastronomique avec des spécialités locales' },
+    { icon: faParking, title: 'Parking Sécurisé', description: 'Parking privé et sécurisé pour tous les clients' },
+    { icon: faSpa, title: 'Spa & Bien-être', description: 'Centre de bien-être avec massages et soins relaxants' }
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500 text-center">
+          <p className="text-xl font-semibold">{error}</p>
+          <p className="mt-2">Veuillez réessayer plus tard</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[600px] bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80")' }}>
-        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
-          <div className="max-w-lg">
-            <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-              Votre séjour parfait commence ici
+      <div className="relative h-[600px] bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80")' }}>
+        <div className="absolute inset-0 bg-black bg-opacity-50">
+          <div className="container mx-auto px-4 h-full flex flex-col justify-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Bienvenue à Mylan Lodge
             </h1>
-            <p className="mt-4 text-xl text-gray-200">
-              Découvrez le confort et l'élégance dans nos chambres soigneusement conçues pour une expérience inoubliable.
+            <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl">
+              Votre havre de paix au cœur de la nature. Découvrez un séjour inoubliable dans notre établissement de luxe.
             </p>
-            <div className="mt-8">
-              <button 
-                onClick={handleBookingClick}
-                disabled={isLoading}
-                className={`bg-blue-600 hover:bg-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 flex items-center justify-center min-w-[200px] ${
-                  isLoading ? 'opacity-75 cursor-not-allowed' : ''
-                }`}
+            <div className="flex flex-wrap gap-4">
+              <Link
+                to="/rooms"
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Chargement...
-                  </>
-                ) : (
-                  'Réserver maintenant'
-                )}
-              </button>
+                Découvrir nos chambres
+              </Link>
+              {!user && (
+                <Link
+                  to="/register"
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                >
+                  Créer un compte
+                </Link>
+              )}
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Search Section */}
-      <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SearchBar />
-        </div>
-      </section>
-
-      {/* Rooms Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-12">
-            Nos Chambres
-          </h2>
-          <RoomList rooms={roomsData} />
-        </div>
-      </section>
-
-      {/* Statistics Section */}
-      <section className="py-16 bg-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Statistiques de l'Hôtel
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Découvrez quelques chiffres clés sur notre établissement et nos services.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            <StatsCard icon="fa-door-open" value="120" label="Chambres au total" />
-            <StatsCard icon="fa-check-circle" value="85" label="Chambres disponibles" />
-            <StatsCard icon="fa-calendar-check" value="1,240" label="Réservations ce mois" />
-            <StatsCard icon="fa-users" value="5,680" label="Utilisateurs inscrits" />
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <BookingChart />
+      {/* Features Section */}
+      <div className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Nos Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-blue-600 text-3xl mb-4">
+                  <FontAwesomeIcon icon={feature.icon} />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Modals */}
-      {showLoginModal && (
-        <LoginModal 
-          onClose={() => setShowLoginModal(false)} 
-          showRegister={() => {
-            setShowLoginModal(false);
-            setShowRegisterModal(true);
-          }}
-        />
+      {/* Featured Rooms Section */}
+      <div className="py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Chambres en Vedette</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredRooms.map((room) => (
+              <div key={room._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <img
+                  src={room.images[0]}
+                  alt={room.name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold mb-2">{room.name}</h3>
+                  <p className="text-gray-600 mb-4">{room.description}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-2xl font-bold text-blue-600">{room.price}€</span>
+                    <Link
+                      to={`/rooms/${room._id}`}
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Voir les détails
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Dashboard Section */}
+      {user?.role === 'admin' && (
+        <div className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Tableau de Bord Administrateur</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-blue-600 text-2xl">
+                    <FontAwesomeIcon icon={faBed} />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.totalRooms}</span>
+                </div>
+                <h3 className="text-lg font-semibold">Total des Chambres</h3>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-green-600 text-2xl">
+                    <FontAwesomeIcon icon={faCalendarAlt} />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.availableRooms}</span>
+                </div>
+                <h3 className="text-lg font-semibold">Chambres Disponibles</h3>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-purple-600 text-2xl">
+                    <FontAwesomeIcon icon={faSearch} />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.monthlyBookings}</span>
+                </div>
+                <h3 className="text-lg font-semibold">Réservations du Mois</h3>
+              </div>
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                to="/admin"
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Accéder au tableau de bord complet
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
-      {showRegisterModal && (
-        <RegisterModal 
-          onClose={() => setShowRegisterModal(false)} 
-          showLogin={() => {
-            setShowRegisterModal(false);
-            setShowLoginModal(true);
-          }}
-        />
-      )}
-    </>
+    </div>
   );
 };
 
