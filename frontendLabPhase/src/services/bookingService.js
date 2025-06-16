@@ -9,13 +9,13 @@ const bookingService = {
 
   // Récupérer les réservations de l'utilisateur connecté
   getUserBookings: async () => {
-    const response = await api.get('/bookings/user');
+    const response = await api.get('/my-bookings');
     return response.data;
   },
 
   // Récupérer toutes les réservations (admin uniquement)
   getAllBookings: async () => {
-    const response = await api.get('/admin/bookings');
+    const response = await api.get('/bookings/admin/all');
     return response.data;
   },
 
@@ -48,7 +48,7 @@ const bookingService = {
 
   // Récupérer les statistiques (admin uniquement)
   getStats: async () => {
-    const response = await api.get('/admin/stats');
+    const response = await api.get('/bookings/admin/stats');
     return response.data;
   },
 

@@ -20,7 +20,10 @@ const Home = () => {
   const [stats, setStats] = useState({
     totalRooms: 0,
     availableRooms: 0,
-    monthlyBookings: 0
+    monthlyBookings: 0,
+    totalBookings: 0,
+    totalRevenue: 0,
+    occupancyRate: 0
   });
   const [featuredRooms, setFeaturedRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,12 +33,14 @@ const Home = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [roomsResponse, bookingsResponse] = await Promise.all([
+        const [roomsResponse, bookingsResponse, statsResponse] = await Promise.all([
           roomService.getRooms(),
-          user ? bookingService.getBookings() : Promise.resolve({ bookings: [] })
+          user ? bookingService.getUserBookings() : Promise.resolve({ bookings: [] }),
+          user?.role === 'admin' ? bookingService.getStats() : Promise.resolve({})
         ]);
 
-        const rooms = roomsResponse.rooms || [];
+        // Vérifier si roomsResponse est un tableau ou un objet avec une propriété rooms
+        const rooms = Array.isArray(roomsResponse) ? roomsResponse : (roomsResponse.rooms || []);
         const bookings = bookingsResponse.bookings || [];
 
         // Calculer les statistiques
@@ -44,14 +49,23 @@ const Home = () => {
           new Date(booking.checkIn).getMonth() === currentMonth
         ).length;
 
-        setStats({
-          totalRooms: rooms.length,
-          availableRooms: rooms.filter(room => room.status === 'available').length,
-          monthlyBookings: monthlyBookings
-        });
+        if (user?.role === 'admin') {
+          setStats({
+            ...statsResponse,
+            totalRooms: rooms.length,
+            availableRooms: rooms.filter(room => room.isAvailable).length,
+            monthlyBookings: monthlyBookings
+          });
+        } else {
+          setStats({
+            totalRooms: rooms.length,
+            availableRooms: rooms.filter(room => room.isAvailable).length,
+            monthlyBookings: monthlyBookings
+          });
+        }
 
         // Sélectionner les chambres en vedette (les 3 premières disponibles)
-        setFeaturedRooms(rooms.filter(room => room.status === 'available').slice(0, 3));
+        setFeaturedRooms(rooms.filter(room => room.isAvailable).slice(0, 3));
       } catch (err) {
         setError('Erreur lors du chargement des données');
         console.error('Erreur:', err);
@@ -204,6 +218,33 @@ const Home = () => {
                   <span className="text-2xl font-bold">{stats.monthlyBookings}</span>
                 </div>
                 <h3 className="text-lg font-semibold">Réservations du Mois</h3>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-yellow-600 text-2xl">
+                    <FontAwesomeIcon icon={faCalendarAlt} />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.totalBookings}</span>
+                </div>
+                <h3 className="text-lg font-semibold">Total des Réservations</h3>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-green-600 text-2xl">
+                    <FontAwesomeIcon icon={faSearch} />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.totalRevenue}€</span>
+                </div>
+                <h3 className="text-lg font-semibold">Revenu Total</h3>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-blue-600 text-2xl">
+                    <FontAwesomeIcon icon={faBed} />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.occupancyRate}%</span>
+                </div>
+                <h3 className="text-lg font-semibold">Taux d'Occupation</h3>
               </div>
             </div>
             <div className="mt-8 text-center">

@@ -2,7 +2,7 @@ import api from './api';
 
 const formatRoomData = (room) => {
   return {
-    id: room.id,
+    id: room.id || room._id,
     name: room.name,
     description: room.description,
     price: room.price,
@@ -16,8 +16,15 @@ const formatRoomData = (room) => {
 const roomService = {
   // Récupérer toutes les chambres
   getRooms: async () => {
-    const response = await api.get('/rooms');
-    return response.data.map(formatRoomData);
+    try {
+      const response = await api.get('/rooms');
+      // Vérifier si la réponse est un tableau ou un objet avec une propriété rooms
+      const rooms = Array.isArray(response.data) ? response.data : (response.data.rooms || []);
+      return rooms.map(formatRoomData);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des chambres:', error);
+      return [];
+    }
   },
 
   // Récupérer une chambre par son ID
