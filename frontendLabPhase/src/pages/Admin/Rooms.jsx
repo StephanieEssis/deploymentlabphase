@@ -4,7 +4,7 @@ import axios from 'axios';
 const AdminRooms = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [editingRoom, setEditingRoom] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -22,14 +22,15 @@ const AdminRooms = () => {
   const fetchRooms = async () => {
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
-      const response = await axios.get('http://localhost:5000/api/rooms', {
+      const response = await axios.get('https://backendmanage-1.onrender.com/api/rooms', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRooms(response.data);
       setLoading(false);
-    } catch (error) {
-      setError('Error fetching rooms');
+    } catch (err) {
+      setErrorMessage('Erreur lors de la récupération des chambres');
       setLoading(false);
+      console.error('Erreur:', err);
     }
   };
 
@@ -46,11 +47,11 @@ const AdminRooms = () => {
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
       if (editingRoom) {
-        await axios.put(`http://localhost:5000/api/rooms/${editingRoom._id}`, formData, {
+        await axios.put(`https://backendmanage-1.onrender.com/api/rooms/${editingRoom._id}`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post('http://localhost:5000/api/rooms', formData, {
+        await axios.post('https://backendmanage-1.onrender.com/api/rooms', formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -64,8 +65,9 @@ const AdminRooms = () => {
         amenities: []
       });
       setEditingRoom(null);
-    } catch (error) {
-      setError('Error saving room');
+    } catch (err) {
+      setErrorMessage('Erreur lors de la sauvegarde de la chambre');
+      console.error('Erreur:', err);
     }
   };
 
@@ -82,21 +84,22 @@ const AdminRooms = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this room?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette chambre ?')) {
       try {
         const token = JSON.parse(localStorage.getItem('user'))?.token;
-        await axios.delete(`http://localhost:5000/api/rooms/${id}`, {
+        await axios.delete(`https://backendmanage-1.onrender.com/api/rooms/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchRooms();
-      } catch (error) {
-        setError('Error deleting room');
+      } catch (err) {
+        setErrorMessage('Erreur lors de la suppression de la chambre');
+        console.error('Erreur:', err);
       }
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div>Chargement...</div>;
+  if (errorMessage) return <div className="text-red-500">{errorMessage}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -4,7 +4,7 @@ import axios from 'axios';
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -13,33 +13,35 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
-      const response = await axios.get('http://localhost:5000/api/admin/users', {
+      const response = await axios.get('https://backendmanage-1.onrender.com/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(response.data);
       setLoading(false);
-    } catch (error) {
-      setError('Error fetching users');
+    } catch (err) {
+      setErrorMessage('Erreur lors de la récupération des utilisateurs');
       setLoading(false);
+      console.error('Erreur:', err);
     }
   };
 
   const handleDeleteUser = async (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
       try {
         const token = JSON.parse(localStorage.getItem('user'))?.token;
-        await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
+        await axios.delete(`https://backendmanage-1.onrender.com/api/admin/users/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchUsers();
-      } catch (error) {
-        setError('Error deleting user');
+      } catch (err) {
+        setErrorMessage('Erreur lors de la suppression de l\'utilisateur');
+        console.error('Erreur:', err);
       }
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div>Chargement...</div>;
+  if (errorMessage) return <div className="text-red-500">{errorMessage}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">

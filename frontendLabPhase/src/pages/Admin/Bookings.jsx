@@ -4,7 +4,7 @@ import axios from 'axios';
 const AdminBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -13,14 +13,15 @@ const AdminBookings = () => {
   const fetchBookings = async () => {
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
-      const response = await axios.get('http://localhost:5000/api/admin/bookings', {
+      const response = await axios.get('https://backendmanage-1.onrender.com/api/admin/bookings', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(response.data);
       setLoading(false);
-    } catch (error) {
-      setError('Error fetching bookings');
+    } catch (err) {
+      setErrorMessage('Erreur lors de la récupération des réservations');
       setLoading(false);
+      console.error('Erreur:', err);
     }
   };
 
@@ -28,18 +29,19 @@ const AdminBookings = () => {
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
       await axios.put(
-        `http://localhost:5000/api/admin/bookings/${id}/status`,
+        `https://backendmanage-1.onrender.com/api/admin/bookings/${id}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchBookings();
-    } catch (error) {
-      setError('Error updating booking status');
+    } catch (err) {
+      setErrorMessage('Erreur lors de la mise à jour du statut');
+      console.error('Erreur:', err);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div>Chargement...</div>;
+  if (errorMessage) return <div className="text-red-500">{errorMessage}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -70,7 +72,7 @@ const AdminBookings = () => {
                   {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {booking.totalPrice}€
+                  {booking.totalPrice}FCFA
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

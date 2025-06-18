@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrash, faUsers, faBed, faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
@@ -10,11 +10,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('rooms');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       if (activeTab === 'rooms') {
@@ -32,7 +28,11 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleDeleteRoom = async (roomId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette chambre ?')) {
