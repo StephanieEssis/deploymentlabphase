@@ -190,7 +190,9 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+      <div className="relative h-[600px] bg-cover bg-center" style={{ 
+        backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=70")' 
+      }}>
         <div className="absolute inset-0 bg-black bg-opacity-50">
           <div className="container mx-auto px-4 h-full flex flex-col justify-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
