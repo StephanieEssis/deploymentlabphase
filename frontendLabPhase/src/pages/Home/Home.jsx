@@ -268,7 +268,7 @@ const Home = () => {
                     <h3 className="text-xl font-semibold mb-2">{room.name}</h3>
                     <p className="text-gray-600 mb-4">{room.description}</p>
                     <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold text-blue-600">{room.price}€</span>
+                      <span className="text-2xl font-bold text-blue-600">{room.price} FCFA</span>
                       <Link
                         to={`/rooms/${room._id}`}
                         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
@@ -331,7 +331,7 @@ const Home = () => {
                   <div className="text-green-600 text-2xl">
                     <FontAwesomeIcon icon={faSearch} />
                   </div>
-                  <span className="text-2xl font-bold">{stats.totalRevenue}€</span>
+                  <span className="text-2xl font-bold">{stats.totalRevenue} FCFA</span>
                 </div>
                 <h3 className="text-lg font-semibold">Revenu Total</h3>
               </div>

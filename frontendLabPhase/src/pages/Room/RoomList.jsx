@@ -5,54 +5,54 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import OptimizedImage from '../../components/OptimizedImage';
 import SkeletonLoader from '../../components/SkeletonLoader';
 
+// Données de fallback pour les chambres en cas d'erreur API
+const fallbackRooms = [
+  {
+    _id: 'fallback-1',
+    name: 'Chambre Standard',
+    description: 'Confort essentiel pour un séjour agréable avec lit queen, salle de bain privée et vue sur la ville.',
+    price: 75,
+    images: ['https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop'],
+    isAvailable: true,
+    capacity: 2,
+    amenities: ['Wi-Fi', 'TV', 'Climatisation', 'Sèche-cheveux']
+  },
+  {
+    _id: 'fallback-2',
+    name: 'Chambre Deluxe',
+    description: 'Espace supplémentaire et commodités premium avec lit king et vue panoramique.',
+    price: 95,
+    images: ['https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&h=600&fit=crop'],
+    isAvailable: true,
+    capacity: 2,
+    amenities: ['Wi-Fi', 'TV écran plat', 'Mini-bar', 'Climatisation', 'Salle de bain marbre']
+  },
+  {
+    _id: 'fallback-3',
+    name: 'Suite Junior',
+    description: 'Séjour luxueux avec salon séparé et chambre spacieuse.',
+    price: 120,
+    images: ['https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop'],
+    isAvailable: true,
+    capacity: 3,
+    amenities: ['Wi-Fi premium', 'TV 55"', 'Espace bureau', 'Service en chambre']
+  },
+  {
+    _id: 'fallback-4',
+    name: 'Suite Familiale',
+    description: 'Idéal pour les familles avec enfants, comprenant deux chambres séparées.',
+    price: 150,
+    images: ['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop'],
+    isAvailable: true,
+    capacity: 4,
+    amenities: ['Wi-Fi', '2 TV', 'Espace jeu', 'Lit bébé sur demande']
+  }
+];
+
 const RoomList = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Données de fallback pour les chambres en cas d'erreur API
-  const fallbackRooms = [
-    {
-      _id: 'fallback-1',
-      name: 'Chambre Standard',
-      description: 'Confort essentiel pour un séjour agréable avec lit queen, salle de bain privée et vue sur la ville.',
-      price: 75,
-      images: ['https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop'],
-      isAvailable: true,
-      capacity: 2,
-      amenities: ['Wi-Fi', 'TV', 'Climatisation', 'Sèche-cheveux']
-    },
-    {
-      _id: 'fallback-2',
-      name: 'Chambre Deluxe',
-      description: 'Espace supplémentaire et commodités premium avec lit king et vue panoramique.',
-      price: 95,
-      images: ['https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&h=600&fit=crop'],
-      isAvailable: true,
-      capacity: 2,
-      amenities: ['Wi-Fi', 'TV écran plat', 'Mini-bar', 'Climatisation', 'Salle de bain marbre']
-    },
-    {
-      _id: 'fallback-3',
-      name: 'Suite Junior',
-      description: 'Séjour luxueux avec salon séparé et chambre spacieuse.',
-      price: 120,
-      images: ['https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop'],
-      isAvailable: true,
-      capacity: 3,
-      amenities: ['Wi-Fi premium', 'TV 55"', 'Espace bureau', 'Service en chambre']
-    },
-    {
-      _id: 'fallback-4',
-      name: 'Suite Familiale',
-      description: 'Idéal pour les familles avec enfants, comprenant deux chambres séparées.',
-      price: 150,
-      images: ['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop'],
-      isAvailable: true,
-      capacity: 4,
-      amenities: ['Wi-Fi', '2 TV', 'Espace jeu', 'Lit bébé sur demande']
-    }
-  ];
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -145,7 +145,7 @@ const RoomList = () => {
                 
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="text-2xl font-bold text-blue-600">{room.price}€</span>
+                    <span className="text-2xl font-bold text-blue-600">{room.price} FCFA</span>
                     <span className="text-sm text-gray-500 ml-1">/nuit</span>
                   </div>
                   <Link

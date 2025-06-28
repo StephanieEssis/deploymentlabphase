@@ -58,7 +58,7 @@ const bookingService = {
 
   // Récupérer les statistiques (admin uniquement)
   getStats: async () => {
-    const response = await api.get('/admin/stats');
+    const response = await api.get('/admin/dashboard');
     return response.data;
   },
 
@@ -72,7 +72,7 @@ const bookingService = {
   },
 
   getBookings: async () => {
-    const response = await api.get('/bookings');
+    const response = await api.get('/bookings/my-bookings');
     return response.data;
   },
 

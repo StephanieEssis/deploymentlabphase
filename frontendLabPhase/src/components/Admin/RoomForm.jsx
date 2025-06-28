@@ -99,8 +99,8 @@ const RoomForm = ({ room, onClose, onSuccess }) => {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price">
-                Prix par nuit (€)
+              <label className="block text-sm font-medium text-gray-700">
+                Prix par nuit (FCFA)
               </label>
               <input
                 type="number"

@@ -10,9 +10,6 @@ import {
   faList,
   faUserCog
 } from '@fortawesome/free-solid-svg-icons';
-import roomService from '../../services/roomService';
-import bookingService from '../../services/bookingService';
-import { userService } from '../../services/userService';
 
 const StatsCard = ({ icon, title, value, color }) => (
   <div className="bg-white p-6 rounded-lg shadow-md">
@@ -53,26 +50,37 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [roomsResponse, bookingsResponse, usersResponse] = await Promise.all([
-          roomService.getRooms(),
-          bookingService.getBookings(),
-          userService.getUsers()
-        ]);
-
-        const rooms = roomsResponse.rooms || [];
-        const bookings = bookingsResponse.bookings || [];
-        const users = usersResponse.users || [];
-
-        // Calculer les statistiques
-        const currentMonth = new Date().getMonth();
-        const monthlyBookings = bookings.filter(booking => 
-          new Date(booking.checkIn).getMonth() === currentMonth
-        ).length;
+        
+        // Récupérer les statistiques du dashboard admin
+        const statsResponse = await fetch('https://backendmanage-3.onrender.com/api/admin/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (!statsResponse.ok) {
+          throw new Error('Erreur lors de la récupération des statistiques');
+        }
+        
+        const statsData = await statsResponse.json();
+        
+        // Récupérer les utilisateurs
+        const usersResponse = await fetch('https://backendmanage-3.onrender.com/api/admin/users', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        let users = [];
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          users = usersData.users || usersData || [];
+        }
 
         setStats({
-          totalRooms: rooms.length,
-          availableRooms: rooms.filter(room => room.status === 'available').length,
-          monthlyBookings: monthlyBookings,
+          totalRooms: statsData.totalRooms || 0,
+          availableRooms: statsData.availableRooms || 0,
+          monthlyBookings: statsData.totalBookings || 0,
           totalUsers: users.length
         });
       } catch (err) {
