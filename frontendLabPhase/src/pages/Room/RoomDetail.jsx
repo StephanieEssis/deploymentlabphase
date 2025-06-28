@@ -198,7 +198,7 @@ const RoomDetail = () => {
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow-md sticky top-8">
             <div className="text-3xl font-bold text-blue-600 mb-4">
-              {room.price}€ <span className="text-sm text-gray-500">/ nuit</span>
+              {room.price}FCFA <span className="text-sm text-gray-500">/ nuit</span>
             </div>
             <button
               onClick={handleBookNow}

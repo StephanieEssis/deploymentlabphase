@@ -35,38 +35,35 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Données de fallback pour les chambres en cas d'erreur API
+  // Données de fallback pour les chambres
   const fallbackRooms = [
     {
       _id: 'fallback-1',
       name: 'Chambre Standard',
-      description: 'Confort essentiel pour un séjour agréable avec lit queen, salle de bain privée et vue sur la ville.',
-      price: 75,
-      images: ['https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop'],
+      description: 'Chambre confortable avec équipements de base',
+      price: 75000,
+      images: ['https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=1474&q=80'],
       isAvailable: true
     },
     {
       _id: 'fallback-2',
       name: 'Chambre Deluxe',
-      description: 'Espace supplémentaire et commodités premium avec lit king et vue panoramique.',
-      price: 95,
-      images: ['https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&h=600&fit=crop'],
+      description: 'Chambre spacieuse avec vue panoramique',
+      price: 80000,
+      images: ['https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=1474&q=80'],
       isAvailable: true
     },
     {
       _id: 'fallback-3',
       name: 'Suite Junior',
-      description: 'Séjour luxueux avec salon séparé et chambre spacieuse.',
-      price: 120,
-      images: ['https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop'],
+      description: 'Suite élégante avec salon séparé',
+      price: 120000,
+      images: ['https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=1474&q=80'],
       isAvailable: true
     }
   ];
 
   useEffect(() => {
-    // Attendre que l'authentification soit initialisée
-    if (authLoading) return;
-
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -192,10 +189,8 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section avec image optimisée */}
-      <div className="relative h-[600px] bg-cover bg-center" style={{ 
-        backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=70")' 
-      }}>
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white">
         <div className="absolute inset-0 bg-black bg-opacity-50">
           <div className="container mx-auto px-4 h-full flex flex-col justify-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
