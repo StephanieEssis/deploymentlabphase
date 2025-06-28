@@ -152,7 +152,7 @@ const Dashboard = () => {
           icon={faPlus}
           title="Ajouter une Chambre"
           description="Créer une nouvelle chambre dans le système"
-          to="/admin/rooms/new"
+          to="/admin/rooms"
         />
         <QuickAction
           icon={faList}

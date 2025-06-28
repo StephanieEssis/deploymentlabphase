@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBed, faSpinner, faEdit, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faBed, faSpinner, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import RoomForm from '../../components/Admin/RoomForm';
 
 const AdminRooms = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingRoom, setEditingRoom] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    capacity: '',
-    category: '',
-    amenities: []
-  });
 
   useEffect(() => {
     fetchRooms();
@@ -46,54 +39,61 @@ const AdminRooms = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const url = editingRoom 
-        ? `https://backendmanage-3.onrender.com/api/admin/rooms/${editingRoom._id}`
-        : 'https://backendmanage-3.onrender.com/api/admin/rooms';
-      
-      const response = await fetch(url, {
-        method: editingRoom ? 'PUT' : 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur lors de la sauvegarde');
-      }
-      
-      fetchRooms();
-      resetForm();
-    } catch (error) {
-      console.error('Error saving room:', error);
-      alert(`Erreur: ${error.message}`);
+  const handleSubmit = async (formData) => {
+    console.log('🔄 Soumission du formulaire...', formData);
+    
+    // Validation des données
+    if (!formData.name || !formData.description || !formData.price || !formData.capacity) {
+      throw new Error('Veuillez remplir tous les champs obligatoires');
     }
+    
+    // Préparation des données pour l'envoi
+    const roomData = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      price: Number(formData.price),
+      capacity: Number(formData.capacity),
+      category: formData.category.trim() || undefined,
+      amenities: formData.amenities || []
+    };
+    
+    console.log('📦 Données préparées:', roomData);
+    
+    const token = localStorage.getItem('token');
+    console.log('🔑 Token:', token ? 'Présent' : 'Absent');
+    
+    const url = editingRoom 
+      ? `https://backendmanage-3.onrender.com/api/admin/rooms/${editingRoom._id}`
+      : 'https://backendmanage-3.onrender.com/api/admin/rooms';
+    
+    console.log('🌐 URL:', url);
+    
+    const response = await fetch(url, {
+      method: editingRoom ? 'PUT' : 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(roomData)
+    });
+    
+    console.log('📡 Réponse reçue:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ Erreur de réponse:', errorData);
+      throw new Error(errorData.message || 'Erreur lors de la sauvegarde');
+    }
+    
+    const result = await response.json();
+    console.log('✅ Chambre créée/modifiée:', result);
+    
+    await fetchRooms();
+    setEditingRoom(null);
   };
 
   const handleEdit = (room) => {
     setEditingRoom(room);
-    setFormData({
-      name: room.name || '',
-      description: room.description || '',
-      price: room.price || '',
-      capacity: room.capacity || '',
-      category: room.category || '',
-      amenities: room.amenities || []
-    });
   };
 
   const handleDelete = async (id) => {
@@ -121,15 +121,7 @@ const AdminRooms = () => {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      capacity: '',
-      category: '',
-      amenities: []
-    });
+  const handleCancelEdit = () => {
     setEditingRoom(null);
   };
 
@@ -169,89 +161,12 @@ const AdminRooms = () => {
         </div>
       </div>
 
-      {/* Add/Edit Room Form */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <FontAwesomeIcon icon={editingRoom ? faEdit : faPlus} className="mr-2" />
-          {editingRoom ? 'Modifier la chambre' : 'Ajouter une nouvelle chambre'}
-        </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Nom</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Prix par nuit (FCFA)</label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Capacité</label>
-              <input
-                type="number"
-                name="capacity"
-                value={formData.capacity}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Catégorie</label>
-              <input
-                type="text"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows="3"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex space-x-2">
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              {editingRoom ? 'Mettre à jour' : 'Ajouter'}
-            </button>
-            {editingRoom && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
-              >
-                Annuler
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+      {/* Room Form */}
+      <RoomForm 
+        onSubmit={handleSubmit}
+        editingRoom={editingRoom}
+        onCancel={handleCancelEdit}
+      />
 
       {/* Rooms List */}
       {rooms.length === 0 ? (
