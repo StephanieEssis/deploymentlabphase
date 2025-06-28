@@ -21,13 +21,15 @@ const AdminRooms = () => {
 
   const fetchRooms = async () => {
     try {
-      const token = JSON.parse(localStorage.getItem('user'))?.token;
-      const response = await axios.get('http://localhost:5000/api/rooms', {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('https://backendmanage-3.onrender.com/api/rooms', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRooms(response.data);
       setLoading(false);
     } catch (error) {
+      console.error('Error fetching rooms:', error);
       setError('Error fetching rooms');
       setLoading(false);
     }
@@ -44,27 +46,21 @@ const AdminRooms = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = JSON.parse(localStorage.getItem('user'))?.token;
+      const token = localStorage.getItem('token');
       if (editingRoom) {
-        await axios.put(`http://localhost:5000/api/rooms/${editingRoom._id}`, formData, {
+        await axios.put(`https://backendmanage-3.onrender.com/api/rooms/${editingRoom._id}`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post('http://localhost:5000/api/rooms', formData, {
+        await axios.post('https://backendmanage-3.onrender.com/api/rooms', formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
       fetchRooms();
-      setFormData({
-        name: '',
-        description: '',
-        price: '',
-        capacity: '',
-        category: '',
-        amenities: []
-      });
+      setFormData({ name: '', description: '', price: '', capacity: '' });
       setEditingRoom(null);
     } catch (error) {
+      console.error('Error saving room:', error);
       setError('Error saving room');
     }
   };
@@ -84,12 +80,13 @@ const AdminRooms = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this room?')) {
       try {
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
-        await axios.delete(`http://localhost:5000/api/rooms/${id}`, {
+        const token = localStorage.getItem('token');
+        await axios.delete(`https://backendmanage-3.onrender.com/api/rooms/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchRooms();
       } catch (error) {
+        console.error('Error deleting room:', error);
         setError('Error deleting room');
       }
     }

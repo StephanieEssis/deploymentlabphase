@@ -3,19 +3,29 @@ import api from './api';
 const bookingService = {
   // Créer une nouvelle réservation
   createBooking: async (bookingData) => {
-    const response = await api.post('/bookings', bookingData);
-    return response.data;
+    try {
+      const response = await api.post('/bookings', bookingData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      throw error;
+    }
   },
 
   // Récupérer les réservations de l'utilisateur connecté
   getUserBookings: async () => {
-    const response = await api.get('/my-bookings');
-    return response.data;
+    try {
+      const response = await api.get('/bookings/my-bookings');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user bookings:', error);
+      throw error;
+    }
   },
 
   // Récupérer toutes les réservations (admin uniquement)
   getAllBookings: async () => {
-    const response = await api.get('/bookings/admin/all');
+    const response = await api.get('/admin/bookings');
     return response.data;
   },
 
@@ -48,7 +58,7 @@ const bookingService = {
 
   // Récupérer les statistiques (admin uniquement)
   getStats: async () => {
-    const response = await api.get('/bookings/admin/stats');
+    const response = await api.get('/admin/stats');
     return response.data;
   },
 

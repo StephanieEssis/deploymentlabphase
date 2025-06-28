@@ -12,27 +12,30 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = JSON.parse(localStorage.getItem('user'))?.token;
-      const response = await axios.get('http://localhost:5000/api/admin/users', {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('https://backendmanage-3.onrender.com/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(response.data);
       setLoading(false);
     } catch (error) {
+      console.error('Error fetching users:', error);
       setError('Error fetching users');
       setLoading(false);
     }
   };
 
-  const handleDeleteUser = async (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
-        await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
+        const token = localStorage.getItem('token');
+        await axios.delete(`https://backendmanage-3.onrender.com/api/admin/users/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchUsers();
       } catch (error) {
+        console.error('Error deleting user:', error);
         setError('Error deleting user');
       }
     }
@@ -77,7 +80,7 @@ const AdminUsers = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <button
-                    onClick={() => handleDeleteUser(user._id)}
+                    onClick={() => handleDelete(user._id)}
                     className="text-red-600 hover:text-red-900"
                   >
                     Supprimer

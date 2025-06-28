@@ -12,13 +12,14 @@ const AdminBookings = () => {
 
   const fetchBookings = async () => {
     try {
-      const token = JSON.parse(localStorage.getItem('user'))?.token;
-      const response = await axios.get('http://localhost:5000/api/admin/bookings', {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('https://backendmanage-3.onrender.com/api/admin/bookings', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(response.data);
       setLoading(false);
     } catch (error) {
+      console.error('Error fetching bookings:', error);
       setError('Error fetching bookings');
       setLoading(false);
     }
@@ -26,14 +27,15 @@ const AdminBookings = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const token = JSON.parse(localStorage.getItem('user'))?.token;
+      const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/admin/bookings/${id}/status`,
+        `https://backendmanage-3.onrender.com/api/admin/bookings/${id}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchBookings();
     } catch (error) {
+      console.error('Error updating booking status:', error);
       setError('Error updating booking status');
     }
   };

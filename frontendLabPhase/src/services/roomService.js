@@ -1,16 +1,41 @@
 import api from './api';
 
 const formatRoomData = (room) => {
-  return {
-    id: room.id || room._id,
-    name: room.name,
-    description: room.description,
-    price: room.price,
-    capacity: room.capacity,
-    amenities: room.amenities,
-    images: room.images,
-    status: room.status
+  // Validation et nettoyage des données de chambre
+  if (!room) {
+    console.error('Room data is null or undefined');
+    return null;
+  }
+
+  // S'assurer que l'ID est correct
+  const roomId = room._id || room.id;
+  if (!roomId) {
+    console.error('Room missing ID:', room);
+    return null;
+  }
+
+  // Vérifier que le prix est valide
+  const roomPrice = room.price;
+  if (!roomPrice || roomPrice <= 0 || typeof roomPrice !== 'number') {
+    console.error('Invalid room price:', roomPrice, 'for room:', room.name);
+    return null; // Ne pas retourner de chambres avec des prix invalides
+  }
+
+  const formattedRoom = {
+    _id: roomId, // Garder l'ID original
+    id: roomId,  // Compatibilité avec l'ancien format
+    name: room.name || 'Chambre sans nom',
+    description: room.description || 'Aucune description disponible',
+    price: roomPrice, // Utiliser le prix validé
+    capacity: room.capacity || 1,
+    amenities: room.amenities || [],
+    images: room.images || [],
+    isAvailable: room.isAvailable !== undefined ? room.isAvailable : true,
+    status: room.status || 'available',
+    category: room.category || null
   };
+  
+  return formattedRoom;
 };
 
 const roomService = {
@@ -18,22 +43,49 @@ const roomService = {
   getRooms: async () => {
     try {
       const response = await api.get('/rooms');
+      
       // Vérifier si la réponse est un tableau ou un objet avec une propriété rooms
       const rooms = Array.isArray(response.data) ? response.data : (response.data.rooms || []);
-      return rooms.map(formatRoomData);
+      
+      // Formater et filtrer les chambres valides
+      const formattedRooms = rooms
+        .map((room) => {
+          return formatRoomData(room);
+        })
+        .filter(room => room !== null); // Filtrer les chambres invalides
+      
+      return formattedRooms;
     } catch (error) {
-      console.error('Erreur lors de la récupération des chambres:', error);
-      return [];
+      console.error('Error fetching rooms:', error);
+      if (error.response?.status === 500) {
+        console.error('Server error details:', error.response.data);
+      }
+      throw new Error('Impossible de récupérer les chambres. Veuillez réessayer plus tard.');
     }
   },
 
   // Récupérer une chambre par son ID
   getRoomById: async (id) => {
-    if (!id) {
-      throw new Error('ID de chambre non spécifié');
+    if (!id || id === 'undefined') {
+      console.error('Invalid room ID:', id);
+      throw new Error('ID de chambre non spécifié ou invalide');
     }
-    const response = await api.get(`/rooms/${id}`);
-    return formatRoomData(response.data);
+    
+    try {
+      const response = await api.get(`/rooms/${id}`);
+      
+      const formattedRoom = formatRoomData(response.data);
+      
+      if (!formattedRoom) {
+        console.error('Room not found or invalid data for ID:', id);
+        throw new Error('Chambre non trouvée ou données invalides');
+      }
+      
+      return formattedRoom;
+    } catch (error) {
+      console.error('Error fetching room:', error);
+      throw error;
+    }
   },
 
   // Créer une nouvelle chambre

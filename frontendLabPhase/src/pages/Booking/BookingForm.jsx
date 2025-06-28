@@ -12,6 +12,7 @@ const BookingForm = () => {
   const { user } = useAuth();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     checkIn: '',
@@ -22,16 +23,22 @@ const BookingForm = () => {
 
   useEffect(() => {
     const fetchRoom = async () => {
-      if (!roomId) {
-        setError('ID de chambre non spécifié');
+      if (!roomId || roomId === 'undefined') {
+        setError('ID de chambre non spécifié ou invalide');
         setLoading(false);
         return;
       }
 
       try {
-        console.log('Fetching room with ID:', roomId);
         const data = await roomService.getRoomById(roomId);
-        console.log('Room data:', data);
+        
+        // Vérifier que la chambre a un prix valide
+        if (!data || !data.price || data.price <= 0) {
+          setError('Cette chambre n\'est pas disponible pour la réservation (prix invalide)');
+          setLoading(false);
+          return;
+        }
+        
         setRoom(data);
       } catch (err) {
         console.error('Error fetching room:', err);
@@ -55,15 +62,47 @@ const BookingForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setSubmitting(true);
 
     if (!user) {
       navigate('/login', { state: { from: `/rooms/${roomId}/book` } });
       return;
     }
 
+    // Validation des dates
+    const checkInDate = new Date(formData.checkIn);
+    const checkOutDate = new Date(formData.checkOut);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (checkInDate < today) {
+      setError('La date d\'arrivée ne peut pas être dans le passé');
+      setSubmitting(false);
+      return;
+    }
+
+    if (checkOutDate <= checkInDate) {
+      setError('La date de départ doit être après la date d\'arrivée');
+      setSubmitting(false);
+      return;
+    }
+
+    // Validation du nombre de personnes
+    const totalGuests = parseInt(formData.adults) + parseInt(formData.children);
+    if (totalGuests > room?.capacity) {
+      setError(`Le nombre total de personnes (${totalGuests}) ne peut pas dépasser la capacité de la chambre (${room.capacity})`);
+      setSubmitting(false);
+      return;
+    }
+
     try {
+      // Vérification finale du prix de la chambre
+      if (!room || !room.price || room.price <= 0) {
+        throw new Error('Prix de chambre invalide. Impossible de créer la réservation.');
+      }
+      
       const bookingData = {
-        room: roomId,
+        roomId: roomId,
         checkIn: formData.checkIn,
         checkOut: formData.checkOut,
         guests: {
@@ -73,9 +112,32 @@ const BookingForm = () => {
       };
 
       const response = await bookingService.createBooking(bookingData);
-      navigate(`/bookings/${response.id}`);
+      
+      // Le backend retourne { message, booking: { _id, ... } }
+      const bookingId = response.booking?._id || response.id;
+      
+      if (!bookingId) {
+        throw new Error('ID de réservation non reçu du serveur');
+      }
+      
+      navigate(`/bookings/${bookingId}`);
     } catch (err) {
-      setError(err.message || 'Une erreur est survenue lors de la réservation');
+      console.error('Error creating booking:', err);
+      
+      // Gestion spécifique des erreurs
+      if (err.response?.status === 400) {
+        const errorMessage = err.response.data?.message || 'Données de réservation invalides';
+        setError(errorMessage);
+      } else if (err.response?.status === 401) {
+        setError('Vous devez être connecté pour effectuer une réservation');
+        navigate('/login');
+      } else if (err.response?.status === 404) {
+        setError('Chambre non trouvée');
+      } else {
+        setError(err.message || 'Une erreur est survenue lors de la réservation');
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -201,9 +263,10 @@ const BookingForm = () => {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={submitting}
+                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  Réserver
+                  {submitting ? 'Réservation en cours...' : 'Réserver'}
                 </button>
               </div>
             </form>

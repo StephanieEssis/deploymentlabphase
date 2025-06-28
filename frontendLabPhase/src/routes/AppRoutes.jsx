@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 // Pages publiques
 import Home from '../pages/Home/Home';
@@ -20,20 +20,6 @@ import AdminDashboard from '../pages/Admin/Dashboard';
 import AdminRooms from '../pages/Admin/Rooms';
 import AdminBookings from '../pages/Admin/Bookings';
 import AdminUsers from '../pages/Admin/Users';
-
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { user } = useAuth();
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (requireAdmin && user.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
 
 const AppRoutes = () => {
   return (
