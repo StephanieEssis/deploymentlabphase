@@ -15,10 +15,13 @@ import {
 import './Header.css';
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Debug: Afficher l'état de l'authentification
+  console.log('Header - État auth:', { user, loading, userRole: user?.role });
 
   const handleLogout = () => {
     logout();
@@ -73,7 +76,7 @@ const Header = () => {
 
           {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            {user ? (
+            {!loading && user ? (
               <div className="relative">
                 <button
                   onClick={toggleProfile}
@@ -107,7 +110,7 @@ const Header = () => {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : !loading && !user ? (
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
@@ -121,6 +124,10 @@ const Header = () => {
                 >
                   Inscription
                 </Link>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
               </div>
             )}
           </div>
@@ -154,7 +161,7 @@ const Header = () => {
                 <FontAwesomeIcon icon={faBed} className="mr-2" />
                 Chambres
               </Link>
-              {user?.role === 'admin' && (
+              {!loading && user?.role === 'admin' && (
                 <Link
                   to="/admin"
                   className="text-gray-700 hover:text-blue-600 transition-colors flex items-center"
@@ -164,7 +171,7 @@ const Header = () => {
                   Administration
                 </Link>
               )}
-              {user ? (
+              {!loading && user ? (
                 <>
                   <div className="flex items-center space-x-2 text-gray-700">
                     <FontAwesomeIcon icon={faUser} className="mr-2" />
@@ -194,7 +201,7 @@ const Header = () => {
                     Déconnexion
                   </button>
                 </>
-              ) : (
+              ) : !loading && !user ? (
                 <div className="flex flex-col space-y-2">
                   <Link
                     to="/login"
@@ -210,6 +217,11 @@ const Header = () => {
                   >
                     Inscription
                   </Link>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-2">
+                  <div className="animate-pulse bg-gray-200 h-6 w-16 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
                 </div>
               )}
             </nav>
