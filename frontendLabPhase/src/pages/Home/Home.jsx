@@ -190,10 +190,17 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative h-[600px] bg-cover bg-center" style={{ 
-        backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=70")' 
-      }}>
-        <div className="absolute inset-0 bg-black bg-opacity-50">
+      <div className="relative h-[600px] overflow-hidden">
+        <img 
+          src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80"
+          alt="Mylan Lodge"
+          className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.parentElement.classList.add('bg-blue-600');
+          }}
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-40">
           <div className="container mx-auto px-4 h-full flex flex-col justify-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
               Bienvenue à Mylan Lodge
